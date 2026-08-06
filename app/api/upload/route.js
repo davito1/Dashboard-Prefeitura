@@ -1,13 +1,12 @@
 import { createClient } from '@supabase/supabase-js';
+import { createServerSupabaseClient } from '../../../lib/supabaseServer';
 import { ENTIDADES, MESES } from '../../../lib/constants';
 
 export const runtime = 'nodejs';
 
 // Cliente com a service role key: só existe no servidor, nunca chega ao navegador.
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+// É usado só para GRAVAR (a leitura de "quem está logado" usa a sessão do usuário).
+const supabaseAdmin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
 function validateRow(r) {
   if (!ENTIDADES.includes(r.entidade)) return `entidade inválida: ${r.entidade}`;
@@ -23,12 +22,20 @@ function validateRow(r) {
 
 export async function POST(request) {
   try {
-    const body = await request.json();
-    const { password, rows } = body || {};
+    // 1) confirma que quem está chamando está logado (sessão via cookie)
+    const supabaseAuth = createServerSupabaseClient();
+    const {
+      data: { user },
+    } = await supabaseAuth.auth.getUser();
 
-    if (!password || password !== process.env.UPLOAD_PASSWORD) {
-      return Response.json({ error: 'Senha incorreta.' }, { status: 401 });
+    if (!user) {
+      return Response.json({ error: 'Sessão expirada. Faça login novamente.' }, { status: 401 });
     }
+
+    // 2) processa o envio
+    const body = await request.json();
+    const { rows } = body || {};
+
     if (!Array.isArray(rows) || rows.length === 0) {
       return Response.json({ error: 'Nenhuma linha para gravar.' }, { status: 400 });
     }
@@ -57,9 +64,7 @@ export async function POST(request) {
       });
     }
 
-    const { error } = await supabaseAdmin
-      .from('payroll_rows')
-      .upsert(rowsToUpsert, { onConflict: 'entidade,secretaria,ano,mesnum' });
+    const { error } = await supabaseAdmin.from('payroll_rows').upsert(rowsToUpsert, { onConflict: 'entidade,secretaria,ano,mesnum' });
 
     if (error) {
       return Response.json({ error: `Erro ao gravar no banco: ${error.message}` }, { status: 500 });

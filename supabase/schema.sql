@@ -20,16 +20,17 @@ create table if not exists payroll_rows (
 create index if not exists idx_payroll_rows_periodo on payroll_rows (ano, mesnum);
 create index if not exists idx_payroll_rows_entidade on payroll_rows (entidade);
 
--- Row Level Security: qualquer pessoa com a anon key pode LER (o painel é publico
--- para quem tem o link). Só a service role key (usada na rota de upload, no servidor)
--- pode escrever.
+-- Row Level Security: só quem estiver logado (autenticado no Supabase Auth) pode
+-- LER os dados. Só a service role key (usada na rota de upload, no servidor) pode
+-- escrever.
 alter table payroll_rows enable row level security;
 
-create policy "Leitura publica" on payroll_rows
+create policy "Leitura autenticada" on payroll_rows
   for select
+  to authenticated
   using (true);
 
--- Nenhuma policy de insert/update/delete para a role "anon" -> só service role escreve.
+-- Nenhuma policy de insert/update/delete para a role "authenticated" -> só service role escreve.
 
 -- Tabela simples de log de uploads, para voce ver o historico de atualizacoes
 create table if not exists upload_log (
@@ -43,6 +44,7 @@ create table if not exists upload_log (
 
 alter table upload_log enable row level security;
 
-create policy "Leitura publica log" on upload_log
+create policy "Leitura autenticada log" on upload_log
   for select
+  to authenticated
   using (true);

@@ -1,14 +1,22 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { supabase } from '../../lib/supabaseClient';
 
 export default function UploadPage() {
-  const [password, setPassword] = useState('');
+  const router = useRouter();
   const [fileName, setFileName] = useState(null);
   const [rows, setRows] = useState(null);
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push('/login');
+    router.refresh();
+  };
 
   const handleFile = (file) => {
     setError(null);
@@ -47,11 +55,18 @@ export default function UploadPage() {
       const res = await fetch('/api/upload', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password, rows }),
+        body: JSON.stringify({ rows }),
       });
       const data = await res.json();
-      if (!res.ok) setError(data.error || 'Erro ao enviar.');
-      else setResult(data);
+      if (!res.ok) {
+        if (res.status === 401) {
+          setError('Sua sessão expirou. Faça login de novo.');
+        } else {
+          setError(data.error || 'Erro ao enviar.');
+        }
+      } else {
+        setResult(data);
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -69,9 +84,14 @@ export default function UploadPage() {
             <div className="sub">Suba o arquivo .json que o Claude gerou no chat</div>
           </div>
         </div>
-        <a href="/" className="btn-secondary" style={{ textDecoration: 'none' }}>
-          ← Ver painel
-        </a>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <a href="/" className="btn-secondary" style={{ textDecoration: 'none' }}>
+            ← Ver painel
+          </a>
+          <button type="button" className="btn-secondary" onClick={handleLogout}>
+            Sair
+          </button>
+        </div>
       </div>
 
       <form className="upload-card" onSubmit={handleSubmit}>
@@ -93,11 +113,6 @@ export default function UploadPage() {
             {fileName}: {rows.length} linha(s) reconhecida(s).
           </div>
         )}
-
-        <div className="file-row">
-          <label>Senha</label>
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Senha de upload" required />
-        </div>
 
         <button type="submit" className="btn" disabled={sending || !rows}>
           {sending ? 'Gravando…' : 'Atualizar painel'}
