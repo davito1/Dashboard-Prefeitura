@@ -430,9 +430,9 @@ function EvoChart({ monthlyTotals, selMes }) {
   for (let i = 0; i <= steps; i++) {
     const y = padT + (plotH / steps) * i;
     const val = maxVal - (maxVal / steps) * i;
-    grid.push(<line key={`gl${i}`} x1={padL} y1={y} x2={padL + plotW} y2={y} stroke="#DDD8C8" strokeWidth="1" />);
+    grid.push(<line key={`gl${i}`} x1={padL} y1={y} x2={padL + plotW} y2={y} stroke="#33364a" strokeWidth="1" />);
     grid.push(
-      <text key={`gt${i}`} x={padL - 10} y={y + 4} textAnchor="end" fontSize="10" fill="#5B6B78" fontFamily="IBM Plex Mono">
+      <text key={`gt${i}`} x={padL - 10} y={y + 4} textAnchor="end" fontSize="10" fill="#9397ab" fontFamily="IBM Plex Mono">
         {fmtBRL(val, true)}
       </text>
     );
@@ -441,20 +441,20 @@ function EvoChart({ monthlyTotals, selMes }) {
   return (
     <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 280, display: 'block' }}>
       {grid}
-      <polygon points={`${padL},${padT + plotH} ${areaTop} ${padL + plotW},${padT + plotH}`} fill="#0B5C29" opacity="0.08" />
-      {selIdx >= 0 && <line x1={xFor(selIdx)} y1={padT} x2={xFor(selIdx)} y2={padT + plotH} stroke="#A9791F" strokeWidth="1.4" strokeDasharray="3,3" />}
-      {line('bruto', '#A9791F')}
-      {line('liquido', '#2F7A5E')}
-      {line('total', '#0B5C29')}
-      {dots('bruto', '#A9791F')}
-      {dots('liquido', '#2F7A5E')}
-      {dots('total', '#0B5C29')}
+      <polygon points={`${padL},${padT + plotH} ${areaTop} ${padL + plotW},${padT + plotH}`} fill="#1fae52" opacity="0.12" />
+      {selIdx >= 0 && <line x1={xFor(selIdx)} y1={padT} x2={xFor(selIdx)} y2={padT + plotH} stroke="#9184d9" strokeWidth="1.4" strokeDasharray="3,3" />}
+      {line('bruto', '#d9a536')}
+      {line('liquido', '#34c98a')}
+      {line('total', '#1fae52')}
+      {dots('bruto', '#d9a536')}
+      {dots('liquido', '#34c98a')}
+      {dots('total', '#1fae52')}
       {monthlyTotals.map((m, i) => (
-        <text key={i} x={xFor(i)} y={H - 10} textAnchor="middle" fontSize="11" fill={i === selIdx ? '#0B5C29' : '#5B6B78'} fontWeight={i === selIdx ? 700 : 400} fontFamily="IBM Plex Sans">
+        <text key={i} x={xFor(i)} y={H - 10} textAnchor="middle" fontSize="11" fill={i === selIdx ? '#9184d9' : '#9397ab'} fontWeight={i === selIdx ? 700 : 400} fontFamily="IBM Plex Sans">
           {MESES_ABREV[m.mesnum - 1]}
         </text>
       ))}
-      <line x1={padL} y1={padT + plotH} x2={padL + plotW} y2={padT + plotH} stroke="#1C2B39" strokeWidth="1.4" />
+      <line x1={padL} y1={padT + plotH} x2={padL + plotW} y2={padT + plotH} stroke="#3f424d" strokeWidth="1.4" />
     </svg>
   );
 }
