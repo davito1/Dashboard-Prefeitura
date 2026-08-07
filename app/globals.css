@@ -1,5 +1,4 @@
-
-  :root{
+:root{
     --paper:#161826;
     --paper-raised:#232532;
     --ink:#e9e9ed;
@@ -129,8 +128,8 @@
   .kpi::before{content:""; position:absolute; left:0; top:0; right:0; height:3px; background:var(--blue);}
   .kpi.accent-gold::before{background:var(--gold);}
   .kpi.accent-green::before{background:var(--lime);}
-  .kpi-label{font-size:10px; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-soft); font-weight:600; margin-bottom:10px; font-family:'Source Serif 4',serif; font-style:italic;}
-  .kpi-value{font-family:'IBM Plex Mono',monospace; font-size:19px; font-weight:600; color:var(--ink); line-height:1.15;}
+  .kpi-label{font-size:10px; text-transform:uppercase; letter-spacing:0.07em; color:var(--ink-soft); font-weight:700; margin-bottom:10px; font-family:'IBM Plex Sans',sans-serif; font-style:normal;}
+  .kpi-value{font-family:'IBM Plex Mono',monospace; font-size:14.5px; font-weight:600; color:var(--ink); line-height:1.25; word-break:break-word;}
   .kpi-value small{font-size:13px; font-weight:500; color:var(--ink-soft);}
   .kpi-delta{font-size:11px; margin-top:7px; font-weight:600; letter-spacing:0.02em; text-transform:uppercase;}
   .kpi-delta.up{color:var(--red);}
