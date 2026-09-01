@@ -357,10 +357,10 @@ export default function Dashboard() {
                     {a.secretaria}
                     <span className={`entidade-tag ${tagClass}`}>{tagLabel}</span>
                   </td>
-                  <td>{fmtBRL(a.bruto)}</td>
-                  <td>{fmtBRL(a.liquido)}</td>
-                  <td>{fmtBRL(a.encargos)}</td>
-                  <td style={{ fontWeight: 600 }}>{fmtBRL(a.total)}</td>
+                  <td>{fmtBRLFull(a.bruto)}</td>
+                  <td>{fmtBRLFull(a.liquido)}</td>
+                  <td>{fmtBRLFull(a.encargos)}</td>
+                  <td style={{ fontWeight: 600 }}>{fmtBRLFull(a.total)}</td>
                   <td>{a.func.toLocaleString('pt-BR')}</td>
                   <td className="pct-cell">{fmtPct(a.pct)}</td>
                 </tr>
