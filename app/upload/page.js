@@ -100,10 +100,7 @@ export default function UploadPage() {
       <form className="upload-card" onSubmit={handleSubmit}>
         <h2>Como funciona</h2>
         <p style={{ fontSize: 13.5, color: 'var(--ink-soft)', marginTop: -8, lineHeight: 1.6 }}>
-          Todo mês, mande os PDFs de Encargos e de Centro de Custo (das 3 entidades) para o Claude, como
-          sempre fez. No final, peça pra ele gerar o arquivo <code>.json</code> de atualização — ele te dá
-          um arquivo pra baixar. Escolha esse arquivo aqui embaixo e clique em enviar. Não tem IA rodando
-          no site, então não tem custo nenhum de API — só grava os números no banco.
+
         </p>
 
         <div className="file-row" style={{ marginTop: 18 }}>
