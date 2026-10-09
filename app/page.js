@@ -10,10 +10,8 @@ const fmtBRL = (v, compact = false) => {
     if (Math.abs(v) >= 1000000) return 'R$ ' + (v / 1000000).toFixed(2).replace('.', ',') + ' mi';
     if (Math.abs(v) >= 1000) return 'R$ ' + (v / 1000).toFixed(0).replace('.', ',') + ' mil';
   }
-  return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
+  return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2, maximumFractionDigits: 2 });
 };
-// versão sem abreviação, com centavos — usada nos KPIs do topo, onde a precisão importa
-const fmtBRLFull = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmtPct = (v) => (v * 100).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + '%';
 const titleCase = (s) =>
   s
@@ -231,11 +229,11 @@ export default function Dashboard() {
       </div>
 
       <div className="kpi-row">
-        <Kpi label={`Folha ${mes ? 'do mês' : 'acumulada'} c/ encargos`} value={fmtBRLFull(totalGeral)} />
-        <Kpi label="Bruto" value={fmtBRLFull(brutoGeral)} />
-        <Kpi label="Encargos" value={fmtBRLFull(encargosGeral)} accent="accent-gold" />
+        <Kpi label={`Folha ${mes ? 'do mês' : 'acumulada'} c/ encargos`} value={fmtBRL(totalGeral, true)} />
+        <Kpi label="Bruto" value={fmtBRL(brutoGeral, true)} />
+        <Kpi label="Encargos" value={fmtBRL(encargosGeral, true)} accent="accent-gold" />
         <Kpi label={`Funcionários (${refMes ? titleCase(MESES[refMes - 1]) : '—'})`} value={funcRef.toLocaleString('pt-BR')} accent="accent-green" />
-        <Kpi label="Custo médio / funcionário" value={fmtBRLFull(custoMedio)} />
+        <Kpi label="Custo médio / funcionário" value={fmtBRL(custoMedio)} />
         <div className="kpi">
           <div className="kpi-label">Variação vs. mês anterior</div>
           {variacao === null ? (
@@ -260,16 +258,7 @@ export default function Dashboard() {
           <div className="panel-sub">
             {(secretaria || 'TODAS AS SECRETARIAS')} ({ENTIDADE_LABELS[entidade]})
           </div>
-          <EvoChart
-            monthlyTotals={monthlyTotals}
-            selMes={mes}
-            series={[
-              { field: 'bruto', color: '#d9a536' },
-              { field: 'liquido', color: '#34c98a' },
-              { field: 'total', color: '#1fae52' },
-            ]}
-            valueFmt={(v) => fmtBRL(v, true)}
-          />
+          <EvoChart monthlyTotals={monthlyTotals} selMes={mes} />
           <div className="legend">
             <span className="legend-item">
               <span className="legend-dot" style={{ background: 'var(--blue)' }} /> Total c/ encargos
@@ -301,29 +290,11 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="panel" style={{ marginBottom: 22 }}>
-        <h2><span className="sec-num">III.</span>Evolução de Funcionários</h2>
-        <div className="panel-sub">
-          {(secretaria || 'TODAS AS SECRETARIAS')} ({ENTIDADE_LABELS[entidade]})
-        </div>
-        <EvoChart
-          monthlyTotals={monthlyTotals}
-          selMes={mes}
-          series={[{ field: 'func', color: '#1fae52' }]}
-          valueFmt={(v) => Math.round(v).toLocaleString('pt-BR')}
-        />
-        <div className="legend">
-          <span className="legend-item">
-            <span className="legend-dot" style={{ background: '#1fae52' }} /> Funcionários
-          </span>
-        </div>
-      </div>
-
       <div className="table-panel">
         <div className="table-head-row">
           <div>
             <h2 style={{ margin: 0 }}>
-              <span className="sec-num">IV.</span>Detalhamento por centro de custo
+              <span className="sec-num">III.</span>Detalhamento por centro de custo
             </h2>
             <div className="panel-sub" style={{ marginBottom: 0 }}>
               Clique no cabeçalho para ordenar. Clique numa linha do ranking para filtrar.
@@ -357,10 +328,10 @@ export default function Dashboard() {
                     {a.secretaria}
                     <span className={`entidade-tag ${tagClass}`}>{tagLabel}</span>
                   </td>
-                  <td>{fmtBRLFull(a.bruto)}</td>
-                  <td>{fmtBRLFull(a.liquido)}</td>
-                  <td>{fmtBRLFull(a.encargos)}</td>
-                  <td style={{ fontWeight: 600 }}>{fmtBRLFull(a.total)}</td>
+                  <td>{fmtBRL(a.bruto)}</td>
+                  <td>{fmtBRL(a.liquido)}</td>
+                  <td>{fmtBRL(a.encargos)}</td>
+                  <td style={{ fontWeight: 600 }}>{fmtBRL(a.total)}</td>
                   <td>{a.func.toLocaleString('pt-BR')}</td>
                   <td className="pct-cell">{fmtPct(a.pct)}</td>
                 </tr>
@@ -428,7 +399,7 @@ function Kpi({ label, value, accent }) {
   );
 }
 
-function EvoChart({ monthlyTotals, selMes, series, valueFmt }) {
+function EvoChart({ monthlyTotals, selMes }) {
   const W = 640,
     H = 280,
     padL = 70,
@@ -437,7 +408,7 @@ function EvoChart({ monthlyTotals, selMes, series, valueFmt }) {
     padB = 34;
   const plotW = W - padL - padR,
     plotH = H - padT - padB;
-  const maxVal = Math.max(...monthlyTotals.flatMap((m) => series.map((s) => m[s.field])), 1) * 1.15;
+  const maxVal = Math.max(...monthlyTotals.map((m) => m.total), 1) * 1.15;
   const n = monthlyTotals.length;
   const xFor = (i) => padL + (n > 1 ? i / (n - 1) : 0.5) * plotW;
   const yFor = (v) => padT + plotH - (v / maxVal) * plotH;
@@ -445,26 +416,24 @@ function EvoChart({ monthlyTotals, selMes, series, valueFmt }) {
 
   const line = (field, color) => {
     const pts = monthlyTotals.map((m, i) => `${xFor(i)},${yFor(m[field])}`).join(' ');
-    return <polyline key={field} points={pts} fill="none" stroke={color} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />;
+    return <polyline points={pts} fill="none" stroke={color} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />;
   };
   const dots = (field, color) =>
     monthlyTotals.map((m, i) => (
-      <circle key={`${field}-${i}`} cx={xFor(i)} cy={yFor(m[field])} r={i === selIdx ? 5 : 3.2} fill={color} stroke={i === selIdx ? '#fff' : 'none'} strokeWidth={i === selIdx ? 1.5 : 0} />
+      <circle key={i} cx={xFor(i)} cy={yFor(m[field])} r={i === selIdx ? 5 : 3.2} fill={color} stroke={i === selIdx ? '#fff' : 'none'} strokeWidth={i === selIdx ? 1.5 : 0} />
     ));
 
-  const areaField = series[series.length - 1].field;
-  const areaColor = series[series.length - 1].color;
-  const areaTop = monthlyTotals.map((m, i) => `${xFor(i)},${yFor(m[areaField])}`).join(' ');
+  const areaTop = monthlyTotals.map((m, i) => `${xFor(i)},${yFor(m.total)}`).join(' ');
 
   let grid = [];
   const steps = 4;
   for (let i = 0; i <= steps; i++) {
     const y = padT + (plotH / steps) * i;
     const val = maxVal - (maxVal / steps) * i;
-    grid.push(<line key={`gl${i}`} x1={padL} y1={y} x2={padL + plotW} y2={y} stroke="#33364a" strokeWidth="1" />);
+    grid.push(<line key={`gl${i}`} x1={padL} y1={y} x2={padL + plotW} y2={y} stroke="#DDD8C8" strokeWidth="1" />);
     grid.push(
-      <text key={`gt${i}`} x={padL - 10} y={y + 4} textAnchor="end" fontSize="10" fill="#9397ab" fontFamily="IBM Plex Mono">
-        {valueFmt(val)}
+      <text key={`gt${i}`} x={padL - 10} y={y + 4} textAnchor="end" fontSize="10" fill="#5B6B78" fontFamily="IBM Plex Mono">
+        {fmtBRL(val, true)}
       </text>
     );
   }
@@ -472,16 +441,20 @@ function EvoChart({ monthlyTotals, selMes, series, valueFmt }) {
   return (
     <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 280, display: 'block' }}>
       {grid}
-      <polygon points={`${padL},${padT + plotH} ${areaTop} ${padL + plotW},${padT + plotH}`} fill={areaColor} opacity="0.12" />
-      {selIdx >= 0 && <line x1={xFor(selIdx)} y1={padT} x2={xFor(selIdx)} y2={padT + plotH} stroke="#9184d9" strokeWidth="1.4" strokeDasharray="3,3" />}
-      {series.map((s) => line(s.field, s.color))}
-      {series.map((s) => dots(s.field, s.color))}
+      <polygon points={`${padL},${padT + plotH} ${areaTop} ${padL + plotW},${padT + plotH}`} fill="#0B5C29" opacity="0.08" />
+      {selIdx >= 0 && <line x1={xFor(selIdx)} y1={padT} x2={xFor(selIdx)} y2={padT + plotH} stroke="#A9791F" strokeWidth="1.4" strokeDasharray="3,3" />}
+      {line('bruto', '#A9791F')}
+      {line('liquido', '#2F7A5E')}
+      {line('total', '#0B5C29')}
+      {dots('bruto', '#A9791F')}
+      {dots('liquido', '#2F7A5E')}
+      {dots('total', '#0B5C29')}
       {monthlyTotals.map((m, i) => (
-        <text key={i} x={xFor(i)} y={H - 10} textAnchor="middle" fontSize="11" fill={i === selIdx ? '#9184d9' : '#9397ab'} fontWeight={i === selIdx ? 700 : 400} fontFamily="IBM Plex Sans">
+        <text key={i} x={xFor(i)} y={H - 10} textAnchor="middle" fontSize="11" fill={i === selIdx ? '#0B5C29' : '#5B6B78'} fontWeight={i === selIdx ? 700 : 400} fontFamily="IBM Plex Sans">
           {MESES_ABREV[m.mesnum - 1]}
         </text>
       ))}
-      <line x1={padL} y1={padT + plotH} x2={padL + plotW} y2={padT + plotH} stroke="#3f424d" strokeWidth="1.4" />
+      <line x1={padL} y1={padT + plotH} x2={padL + plotW} y2={padT + plotH} stroke="#1C2B39" strokeWidth="1.4" />
     </svg>
   );
 }
