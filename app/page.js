@@ -20,6 +20,25 @@ const titleCase = (s) =>
     .join(' ')
     .replace(/^./, (c) => c.toUpperCase());
 
+// ===== Áreas (agrupamento de secretarias) =====
+// Cada secretaria cai na primeira área cujas palavras-chave aparecem no nome.
+// Quem não bater em nenhuma vai para PREFEITURA (administração e demais).
+// Para mudar o agrupamento, é só editar as palavras-chave abaixo.
+const AREAS = [
+  { key: 'PREFEITURA', label: 'Demais', keywords: [] },
+  { key: 'EDUCACAO', label: 'Educação', keywords: ['EDUCACAO', 'FUNDEB', 'PROCESSO SELETIVO'] },
+  { key: 'SAUDE', label: 'Saúde', keywords: ['SAUDE'] },
+  { key: 'SOCIAL', label: 'Social', keywords: ['ASSISTENCIA SOCIAL'] },
+  { key: 'SMTT', label: 'SMTT', keywords: ['S.M.T.T', 'SMTT'] },
+];
+const AREA_LABELS = Object.fromEntries(AREAS.map((a) => [a.key, a.label]));
+const semAcento = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase();
+const areaDe = (secretaria) => {
+  const nome = semAcento(secretaria || '');
+  const achada = AREAS.find((a) => a.keywords.some((k) => nome.includes(k)));
+  return achada ? achada.key : 'PREFEITURA';
+};
+
 export default function Dashboard() {
   const router = useRouter();
   const [rows, setRows] = useState([]);
@@ -27,6 +46,7 @@ export default function Dashboard() {
   const [loadError, setLoadError] = useState(null);
 
   const [entidade, setEntidade] = useState('PREFEITURA');
+  const [area, setArea] = useState('TODAS');
   const [mes, setMes] = useState(null); // null = acumulado
   const [secretaria, setSecretaria] = useState(null);
   const [search, setSearch] = useState('');
@@ -66,8 +86,9 @@ export default function Dashboard() {
   const refMes = mes || ultimoMes;
 
   const filteredRowsAllMonths = useMemo(() => {
-    return entidade === 'TODAS' ? rows : rows.filter((r) => r.entidade === entidade);
-  }, [rows, entidade]);
+    const porEntidade = entidade === 'TODAS' ? rows : rows.filter((r) => r.entidade === entidade);
+    return area === 'TODAS' ? porEntidade : porEntidade.filter((r) => areaDe(r.secretaria) === area);
+  }, [rows, entidade, area]);
 
   const filteredRows = useMemo(() => {
     return mes ? filteredRowsAllMonths.filter((r) => r.mesnum === mes) : filteredRowsAllMonths;
@@ -175,6 +196,10 @@ export default function Dashboard() {
   };
 
   const handleEntidadeClick = (e) => setEntidade(e);
+  const handleAreaClick = (a) => {
+    setArea(a);
+    setSecretaria(null); // a secretaria escolhida pode não pertencer à nova área
+  };
   const handleRankClick = (sec) => setSecretaria(secretaria === sec ? null : sec);
 
   return (
@@ -188,6 +213,16 @@ export default function Dashboard() {
             {[...ENTIDADES, 'TODAS'].map((e) => (
               <button key={e} className={entidade === e ? 'active' : ''} onClick={() => handleEntidadeClick(e)}>
                 {ENTIDADE_LABELS[e]}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="field">
+          <label>Área</label>
+          <div className="segmented">
+            {['TODAS', ...AREAS.map((a) => a.key)].map((a) => (
+              <button key={a} className={area === a ? 'active' : ''} onClick={() => handleAreaClick(a)}>
+                {a === 'TODAS' ? 'Todas' : AREA_LABELS[a]}
               </button>
             ))}
           </div>
@@ -221,6 +256,7 @@ export default function Dashboard() {
             onClick={() => {
               setSecretaria(null);
               setMes(null);
+              setArea('TODAS');
             }}
           >
             Limpar seleção
@@ -229,9 +265,9 @@ export default function Dashboard() {
       </div>
 
       <div className="kpi-row">
-        <Kpi label={`Folha ${mes ? 'do mês' : 'acumulada'} c/ encargos`} value={fmtBRL(totalGeral, true)} />
-        <Kpi label="Bruto" value={fmtBRL(brutoGeral, true)} />
-        <Kpi label="Encargos" value={fmtBRL(encargosGeral, true)} accent="accent-gold" />
+        <Kpi label={`Folha ${mes ? 'do mês' : 'acumulada'} c/ encargos`} value={fmtBRL(totalGeral)} />
+        <Kpi label="Bruto" value={fmtBRL(brutoGeral)} />
+        <Kpi label="Encargos" value={fmtBRL(encargosGeral)} accent="accent-gold" />
         <Kpi label={`Funcionários (${refMes ? titleCase(MESES[refMes - 1]) : '—'})`} value={funcRef.toLocaleString('pt-BR')} accent="accent-green" />
         <Kpi label="Custo médio / funcionário" value={fmtBRL(custoMedio)} />
         <div className="kpi">
@@ -256,7 +292,8 @@ export default function Dashboard() {
         <div className="panel">
           <h2><span className="sec-num">I.</span>Evolução mensal — Total com encargos</h2>
           <div className="panel-sub">
-            {(secretaria || 'TODAS AS SECRETARIAS')} ({ENTIDADE_LABELS[entidade]})
+            {(secretaria || 'TODAS AS SECRETARIAS')} ({ENTIDADE_LABELS[entidade]}
+            {area !== 'TODAS' ? ` · ${AREA_LABELS[area]}` : ''})
           </div>
           <EvoChart monthlyTotals={monthlyTotals} selMes={mes} />
           <div className="legend">
